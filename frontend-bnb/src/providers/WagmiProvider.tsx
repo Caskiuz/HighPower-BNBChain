@@ -1,4 +1,4 @@
-'use client'; // Directive for client component in Next.js
+'use client'; // Directiva para componente de cliente en Next.js
 
 import React from 'react';
 import { createConfig, WagmiConfig, http } from 'wagmi';
@@ -9,26 +9,26 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 // Importa los conectores como FUNCIONES directamente desde 'wagmi/connectors'
 import { metaMask, walletConnect, injected } from 'wagmi/connectors';
 
-// 1. Create Wagmi configuration
+// 1. Crea la configuración de Wagmi
 const config = createConfig({
-  // 'autoConnect' goes here in createConfig, this is correct for Wagmi v2.
-  autoConnect: true, // Attempts to auto-connect to the last used wallet.
-  chains: [bscTestnet], // Defines the chains your DApp will interact with
+  // 'autoConnect' va aquí en createConfig, esto es correcto para Wagmi v2.
+  autoConnect: true, // Intenta reconectar automáticamente a la última billetera utilizada.
+  chains: [bscTestnet], // Define las cadenas con las que tu DApp interactuará
   connectors: [
-    // ¡¡CRITICAL CORRECTION!!: Call connectors as FUNCTIONS, DO NOT use 'new'
-    metaMask(), // Call the metaMask() function
+    // ¡¡CORRECCIÓN CRÍTICA!!: Llama a los conectores como FUNCIONES, NO uses 'new'
+    metaMask(), // Llama a la función metaMask()
     walletConnect({
-      projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'YOUR_WALLETCONNECT_PROJECT_ID', // Important! Replace with your WalletConnect Project ID
+      projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'YOUR_WALLETCONNECT_PROJECT_ID', // ¡Importante! Reemplaza con tu ID de proyecto de WalletConnect
       showQrModal: true,
     }),
-    injected(), // Call the injected() function
+    injected(), // Llama a la función injected()
   ],
   transports: {
     [bscTestnet.id]: http(),
   },
 });
 
-// 2. Create a QueryClient for @tanstack/react-query
+// 2. Crea un QueryClient para @tanstack/react-query
 const queryClient = new QueryClient();
 
 interface WagmiProviderProps {
@@ -37,7 +37,7 @@ interface WagmiProviderProps {
 
 export const WagmiProviderWrapper: React.FC<WagmiProviderProps> = ({ children }) => {
   return (
-    // 'autoConnect' is NOT passed as a prop here; it's within the 'config' object.
+    // 'autoConnect' NO se pasa como prop aquí; está dentro del objeto 'config'.
     <WagmiConfig config={config}>
       <QueryClientProvider client={queryClient}>
         {children}

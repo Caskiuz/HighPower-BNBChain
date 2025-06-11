@@ -1,65 +1,65 @@
-'use client'; // Directive for client component in Next.js
+'use client'; // Directiva para componente de cliente en Next.js
 
-import React, { useState } from 'react'; // Removed useMemo as it was not used
-import { useAccount, useConnect, useDisconnect, useNetwork, useWriteContract, useSimulateContract } from 'wagmi'; // useWriteContract and useSimulateContract for transactions
-import { ContractFunctionExecutionError } from 'viem'; // Import specific error type
+import React, { useState } from 'react'; // Eliminado useMemo ya que no se utilizaba
+// CORREGIDO: Ajustes en los nombres de los hooks de Wagmi v2
+import { useAccount, useConnect, useDisconnect, useNetwork, useWriteContract, useSimulateContract } from 'wagmi';
+import { ContractFunctionExecutionError } from 'viem'; // Importa el tipo de error específico de Viem
 
-// Import ABIs of your contracts
-// For your SimpleToken BEP-20
-// Removed SimpleTokenABI and SIMPLE_TOKEN_CONTRACT_ADDRESS as they are not used in the current UI logic
-import MyNFTABI from '../../abis/MyNFT.sol/MyNFT.json'; // Adjust path if necessary
+// Importa los ABIs de tus contratos
+import MyNFTABI from '../../abis/MyNFT.sol/MyNFT.json'; // Ajusta la ruta si es necesario
 
-// !! IMPORTANT: These addresses are from your successful deployment !!
-const SIMPLE_TOKEN_CONTRACT_ADDRESS = '0xE02F5740F01EDBC5ccAE634312f7C6a90a31053B'; // Your deployed SimpleToken address (kept for future use, but currently not used in UI)
-const MY_NFT_CONTRACT_ADDRESS = '0x4732ecF022235C877f60Ca000eEA7c19440f436F'; // Your deployed MyNFT address
+// !! IMPORTANTE: ¡Estas direcciones son de tu despliegue exitoso! !!
+// 'SIMPLE_TOKEN_CONTRACT_ADDRESS' se mantiene pero no se usa en la UI actual.
+const SIMPLE_TOKEN_CONTRACT_ADDRESS = '0xE02F5740F01EDBC5ccAE634312f7C6a90a31053B'; // Tu dirección de SimpleToken desplegado
+const MY_NFT_CONTRACT_ADDRESS = '0x4732ecF022235C877f60Ca000eEA7c19440f436F'; // Tu dirección de MyNFT desplegado
 
-// Main application component
+// Componente principal de tu aplicación
 export default function HomePage() {
-  const { address, isConnected } = useAccount(); // Hook to get address and connection status
-  // Adjusted useConnect destructuring: 'status' removed as it was not used.
-  const { connect, connectors, error, isConnecting, pendingConnector } = useConnect(); // Hook to connect wallets
-  const { disconnect } = useDisconnect(); // Hook to disconnect
-  const { chain } = useNetwork(); // Hook to get current chain information
+  const { address, isConnected } = useAccount(); // Hook para obtener la dirección y el estado de conexión
+  // CORREGIDO: useConnect retorna 'isConnecting' y 'pendingConnector' directamente. 'status' eliminado.
+  const { connect, connectors, error, isConnecting, pendingConnector } = useConnect(); // Hook para conectar billeteras
+  const { disconnect } = useDisconnect(); // Hook para desconectar
+  const { chain } = useNetwork(); // Hook para obtener información de la cadena actual
 
-  // State for NFT minting
+  // Estado para acuñar NFT
   const [nftMintingMessage, setNftMintingMessage] = useState('');
   const [isMintingNFT, setIsMintingNFT] = useState(false);
-  const [nftTokenURI, setNftTokenURI] = useState('ipfs://QmZ4Y9pMv2oW2f7v8k3f3h3g3d3c3b3a3c3e3f3g3h3i3j3k3l3m3n3o3p3q3r3s3t3u3v3w3x3y3z'); // Example URI for NFT metadata (replace this)
+  const [nftTokenURI, setNftTokenURI] = useState('ipfs://QmZ4Y9pMv2oW2f7v8k3f3h3g3d3c3b3a3c3e3f3g3h3i3j3k3l3m3n3o3p3q3r3s3t3u3v3w3x3y3z'); // URI de ejemplo para metadatos de NFT (reemplazar)
 
-  // useSimulateContract replaces usePrepareContractWrite in Wagmi v2
+  // CORREGIDO: useSimulateContract reemplaza usePrepareContractWrite en Wagmi v2
   const { data: mintNftConfig, error: simulateMintNftError } = useSimulateContract({
-    address: MY_NFT_CONTRACT_ADDRESS as `0x${string}`, // Cast to correct Viem address type
-    abi: MyNFTABI.abi, // ABI of the NFT contract
+    address: MY_NFT_CONTRACT_ADDRESS as `0x${string}`, // Castea a la dirección correcta de Viem
+    abi: MyNFTABI.abi, // ABI del contrato NFT
     functionName: 'mintNFT',
-    args: [address, nftTokenURI], // Mint NFT to the connected address with the specified URI
-    enabled: isConnected && !!address && !isMintingNFT, // Enable if connected and not currently minting
+    args: [address, nftTokenURI], // Acuñar NFT a la dirección conectada con la URI especificada
+    enabled: isConnected && !!address && !isMintingNFT, // Habilitar si está conectado y no se está acuñando actualmente
   });
 
-  // useWriteContract replaces useContractWrite in Wagmi v2
-  // isMintNftSuccess, isMintNftError, mintNftTxError removed from destructuring as not explicitly used.
+  // CORREGIDO: useWriteContract reemplaza useContractWrite en Wagmi v2
+  // 'isSuccess', 'isError', 'error' se han eliminado de la desestructuración ya que no se usaban directamente.
   const { writeContract: mintNFT, isPending: isMintingNFTTx } = useWriteContract();
 
   const handleMintNFT = async () => {
-    // Ensure mintNftConfig.request exists and call writeContract
+    // Asegura que mintNftConfig.request exista y llama a writeContract
     if (!mintNftConfig || !mintNftConfig.request || !mintNFT) {
-      setNftMintingMessage("Error: Could not prepare NFT mint function. Make sure you are connected and the NFT contract is deployed.");
+      setNftMintingMessage("Error: No se pudo preparar la función de acuñación de NFT. Asegúrate de estar conectado y de que el contrato NFT esté desplegado.");
       if (simulateMintNftError) {
-        console.error("Error simulating NFT mint:", simulateMintNftError);
+        console.error("Error al simular la acuñación de NFT:", simulateMintNftError);
       }
       return;
     }
     setIsMintingNFT(true);
-    setNftMintingMessage('Minting NFT...');
+    setNftMintingMessage('Acuñando NFT...');
     try {
-      // Pass the request object from the simulation to writeContract
+      // Pasa el objeto de request de la simulación a writeContract
       await mintNFT(mintNftConfig.request);
-    } catch (err: unknown) { // Explicitly type 'err' as unknown and narrow
+    } catch (err: unknown) { // Tipo explícito para 'err' como 'unknown' y luego se estrecha
        if (err instanceof ContractFunctionExecutionError) {
-            setNftMintingMessage(`Error minting NFT: ${err.shortMessage || err.message}`);
-          } else if (err instanceof Error) { // Catch general Error types
-            setNftMintingMessage(`Error minting NFT: ${err.message}`);
-          } else { // Fallback for other unknown error types
-            setNftMintingMessage(`Error minting NFT: An unknown error occurred.`);
+            setNftMintingMessage(`Error al acuñar NFT: ${err.shortMessage || err.message}`);
+          } else if (err instanceof Error) { // Captura otros tipos de errores estándar
+            setNftMintingMessage(`Error al acuñar NFT: ${err.message}`);
+          } else { // Fallback para otros tipos de errores desconocidos
+            setNftMintingMessage(`Error al acuñar NFT: Ocurrió un error desconocido.`);
           }
           setIsMintingNFT(false);
     }
@@ -71,23 +71,23 @@ export default function HomePage() {
         HighPower DApp (BNB Chain)
       </h1>
 
-      {/* Wallet connection section */}
+      {/* Sección de conexión de billetera */}
       <div className="mb-4">
         {isConnected ? (
           <div className="text-center">
             <p className="text-lg mb-2 text-gray-400">
-              Connected as: <span className="font-mono text-purple-300">{address}</span>
+              Conectado como: <span className="font-mono text-purple-300">{address}</span>
             </p>
             {chain && (
               <p className="text-md mb-4 text-gray-500">
-                Network: <span className="font-mono text-blue-300">{chain.name} ({chain.id})</span>
+                Red: <span className="font-mono text-blue-300">{chain.name} ({chain.id})</span>
               </p>
             )}
             <button
               onClick={() => disconnect()}
               className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105"
             >
-              Disconnect Wallet
+              Desconectar Cartera
             </button>
           </div>
         ) : (
@@ -97,11 +97,11 @@ export default function HomePage() {
                 key={connector.id}
                 onClick={() => connect({ connector })}
                 className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={!connector.ready || isConnecting} // Use isConnecting for 'isLoading'
+                disabled={!connector.ready || isConnecting} // Usar isConnecting en lugar de isLoading
               >
-                {isConnecting && connector.id === pendingConnector?.id // Use isConnecting for 'isLoading'
-                  ? 'Connecting...'
-                  : `Connect with ${connector.name}`}
+                {isConnecting && connector.id === pendingConnector?.id // Usar isConnecting en lugar de isLoading
+                  ? 'Conectando...'
+                  : `Conectar con ${connector.name}`}
               </button>
             ))}
             {error && <p className="text-red-500 mt-2 text-center">{error.message}</p>}
@@ -109,16 +109,16 @@ export default function HomePage() {
         )}
       </div>
 
-      {/* NFT Minting Section */}
+      {/* Sección de acuñación de NFT */}
       {isConnected && (
         <div className="bg-gray-800 p-8 rounded-lg shadow-xl w-full max-w-md mt-8">
           <h2 className="text-3xl font-semibold mb-6 text-center text-blue-400">
-            Mint HighPower NFT
+            Acuñar NFT HighPower
           </h2>
 
           <div className="mb-4">
             <label htmlFor="nftUri" className="block text-gray-400 text-sm font-bold mb-2">
-              NFT Metadata URI:
+              URI de Metadatos del NFT:
             </label>
             <input
               type="text"
@@ -126,11 +126,11 @@ export default function HomePage() {
               value={nftTokenURI}
               onChange={(e) => setNftTokenURI(e.target.value)}
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600"
-              placeholder="e.g., ipfs://QmZ4Y9pMv2oW2f7v8k3f3h3g3d3c3b3a3c3e3f3g3h3i3j3k3l3m3n3o3p3q3r3s3t3u3v3w3x3y3z"
+              placeholder="ej., ipfs://QmZ4Y9pMv2oW2f7v8k3f3h3g3d3c3b3a3c3e3f3g3h3i3j3k3l3m3n3o3p3q3r3s3t3u3v3w3x3y3z"
               disabled={isMintingNFT}
             />
              <p className="text-xs text-gray-500 mt-1">
-                This URI should point to a JSON metadata file (like OpenSea's) containing the NFT's image and other properties.
+                Esta URI debe apuntar a un archivo JSON de metadatos (como los de OpenSea) que contenga la imagen del NFT y otras propiedades.
             </p>
           </div>
 
@@ -139,7 +139,7 @@ export default function HomePage() {
             disabled={!mintNftConfig?.request || isMintingNFT || isMintingNFTTx}
             className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed text-lg"
           >
-            {isMintingNFT || isMintingNFTTx ? 'Minting NFT...' : 'Mint NFT'}
+            {isMintingNFT || isMintingNFTTx ? 'Acuñando NFT...' : 'Acuñar NFT'}
           </button>
 
           {nftMintingMessage && (
@@ -150,21 +150,21 @@ export default function HomePage() {
 
           {simulateMintNftError && (
             <p className="mt-2 text-sm text-red-400 text-center">
-              Preparation error (simulation): {simulateMintNftError.message}
+              Error de preparación (simulación): {simulateMintNftError.message}
             </p>
           )}
         </div>
       )}
 
-      {/* ERC-20 Token Management Section (Add more features here if needed) */}
+      {/* Sección de gestión de tokens BEP-20 (añadir más funciones aquí si es necesario) */}
       {isConnected && (
         <div className="bg-gray-800 p-8 rounded-lg shadow-xl w-full max-w-md mt-8">
           <h2 className="text-3xl font-semibold mb-6 text-center text-blue-400">
-            Manage HGP Tokens (ERC-20)
+            Gestionar Tokens HGP (BEP-20)
           </h2>
           <p className="text-center text-gray-400">
-            Once your SimpleToken.sol contract is deployed on the BNB Chain testnet,
-            you can add logic here to interact with it (e.g., transfer, check balance, etc.).
+            Una vez que su contrato SimpleToken.sol esté desplegado en la testnet de BNB Chain,
+            puede añadir lógica aquí para interactuar con él (ej., transferir, verificar saldo, etc.).
           </p>
         </div>
       )}
