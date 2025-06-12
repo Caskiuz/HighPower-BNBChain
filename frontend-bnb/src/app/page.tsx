@@ -1,22 +1,24 @@
 'use client'; // Directiva para componente de cliente en Next.js
 
-import React, { useState } from 'react'; // Eliminado useMemo ya que no se utilizaba
-// CORREGIDO: Ajustes en los nombres de los hooks de Wagmi v2
-import { useAccount, useConnect, useDisconnect, useNetwork, useWriteContract, useSimulateContract } from 'wagmi';
+import React, { useState } from 'react';
+// Importaciones de hooks de Wagmi v2
+import { useAccount, useConnect, useDisconnect, useWriteContract, useSimulateContract, useReadContract } from 'wagmi'; // Añadido useReadContract
+// Importación explícita para useNetwork desde 'wagmi/actions' para compatibilidad con el entorno de compilación
+import { useNetwork } from 'wagmi/actions';
 import { ContractFunctionExecutionError } from 'viem'; // Importa el tipo de error específico de Viem
 
 // Importa los ABIs de tus contratos
+import SimpleTokenABI from '../../abis/SimpleToken.sol/SimpleToken.json'; // Importado ABI de SimpleToken
 import MyNFTABI from '../../abis/MyNFT.sol/MyNFT.json'; // Ajusta la ruta si es necesario
 
 // !! IMPORTANTE: ¡Estas direcciones son de tu despliegue exitoso! !!
-// 'SIMPLE_TOKEN_CONTRACT_ADDRESS' se mantiene pero no se usa en la UI actual.
+// 'SIMPLE_TOKEN_CONTRACT_ADDRESS' se vuelve a activar y se usa para mostrar el saldo.
 const SIMPLE_TOKEN_CONTRACT_ADDRESS = '0xE02F5740F01EDBC5ccAE634312f7C6a90a31053B'; // Tu dirección de SimpleToken desplegado
 const MY_NFT_CONTRACT_ADDRESS = '0x4732ecF022235C877f60Ca000eEA7c19440f436F'; // Tu dirección de MyNFT desplegado
 
 // Componente principal de tu aplicación
 export default function HomePage() {
   const { address, isConnected } = useAccount(); // Hook para obtener la dirección y el estado de conexión
-  // CORREGIDO: useConnect retorna 'isConnecting' y 'pendingConnector' directamente. 'status' eliminado.
   const { connect, connectors, error, isConnecting, pendingConnector } = useConnect(); // Hook para conectar billeteras
   const { disconnect } = useDisconnect(); // Hook para desconectar
   const { chain } = useNetwork(); // Hook para obtener información de la cadena actual
@@ -26,7 +28,7 @@ export default function HomePage() {
   const [isMintingNFT, setIsMintingNFT] = useState(false);
   const [nftTokenURI, setNftTokenURI] = useState('ipfs://QmZ4Y9pMv2oW2f7v8k3f3h3g3d3c3b3a3c3e3f3g3h3i3j3k3l3m3n3o3p3q3r3s3t3u3v3w3x3y3z'); // URI de ejemplo para metadatos de NFT (reemplazar)
 
-  // CORREGIDO: useSimulateContract reemplaza usePrepareContractWrite en Wagmi v2
+  // useSimulateContract reemplaza usePrepareContractWrite en Wagmi v2
   const { data: mintNftConfig, error: simulateMintNftError } = useSimulateContract({
     address: MY_NFT_CONTRACT_ADDRESS as `0x${string}`, // Castea a la dirección correcta de Viem
     abi: MyNFTABI.abi, // ABI del contrato NFT
@@ -35,8 +37,7 @@ export default function HomePage() {
     enabled: isConnected && !!address && !isMintingNFT, // Habilitar si está conectado y no se está acuñando actualmente
   });
 
-  // CORREGIDO: useWriteContract reemplaza useContractWrite en Wagmi v2
-  // 'isSuccess', 'isError', 'error' se han eliminado de la desestructuración ya que no se usaban directamente.
+  // useWriteContract reemplaza useContractWrite en Wagmi v2
   const { writeContract: mintNFT, isPending: isMintingNFTTx } = useWriteContract();
 
   const handleMintNFT = async () => {
@@ -64,6 +65,16 @@ export default function HomePage() {
           setIsMintingNFT(false);
     }
   };
+
+  // NUEVO: Hook para leer el balance del token HGP
+  const { data: hgpBalance, isLoading: isHGPBalanceLoading, refetch: refetchHGPBalance } = useReadContract({
+    address: SIMPLE_TOKEN_CONTRACT_ADDRESS as `0x${string}`,
+    abi: SimpleTokenABI.abi,
+    functionName: 'balanceOf',
+    args: [address],
+    enabled: isConnected && !!address, // Habilitar si está conectado
+    watch: true, // Recargar el balance automáticamente si cambia
+  });
 
   return (
     <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-4">
@@ -97,9 +108,9 @@ export default function HomePage() {
                 key={connector.id}
                 onClick={() => connect({ connector })}
                 className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={!connector.ready || isConnecting} // Usar isConnecting en lugar de isLoading
+                disabled={!connector.ready || isConnecting}
               >
-                {isConnecting && connector.id === pendingConnector?.id // Usar isConnecting en lugar de isLoading
+                {isConnecting && connector.id === pendingConnector?.id
                   ? 'Conectando...'
                   : `Conectar con ${connector.name}`}
               </button>
@@ -156,16 +167,26 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Sección de gestión de tokens BEP-20 (añadir más funciones aquí si es necesario) */}
+      {/* Sección de gestión de tokens BEP-20 (HGP) */}
       {isConnected && (
         <div className="bg-gray-800 p-8 rounded-lg shadow-xl w-full max-w-md mt-8">
           <h2 className="text-3xl font-semibold mb-6 text-center text-blue-400">
             Gestionar Tokens HGP (BEP-20)
           </h2>
-          <p className="text-center text-gray-400">
-            Una vez que su contrato SimpleToken.sol esté desplegado en la testnet de BNB Chain,
-            puede añadir lógica aquí para interactuar con él (ej., transferir, verificar saldo, etc.).
-          </p>
+          {isHGPBalanceLoading ? (
+            <p className="text-center text-gray-400">Cargando balance de HGP...</p>
+          ) : (
+            hgpBalance !== undefined ? (
+              <p className="text-center text-lg text-green-400">
+                Tu balance de HGP: <span className="font-bold">{Number(hgpBalance) / (10**18)}</span> HGP
+              </p>
+            ) : (
+              <p className="text-center text-red-400">
+                No se pudo cargar el balance de HGP. Asegúrate de que el contrato sea correcto.
+              </p>
+            )
+          )}
+          {/* Aquí podrías añadir más funciones para el token HGP, como transferencias */}
         </div>
       )}
     </div>
