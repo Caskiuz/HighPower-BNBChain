@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.80.6",
-    "@wagmi/connectors": "^5.8.5",
+    "@wagmi/connectors": "^2.0.0",
     "next": "15.3.3",
     "react": "^18.2.0",      
     "react-dom": "^18.2.0", 
