@@ -1,7 +1,7 @@
 import './globals.css';
 import { Inter } from 'next/font/google';
 import dynamic from 'next/dynamic'; // <-- Importa 'dynamic' de Next.js
-import React from 'react'; // Asegura que React esté importado
+import React from 'react'; // Asegura que React esté importado explícitamente
 
 const inter = Inter({ subsets: ['latin'] });
 

@@ -8,17 +8,17 @@ import { metaMask, walletConnect, injected } from '@wagmi/connectors';
 
 // 1. Create the Wagmi configuration
 const config = createConfig({
-  autoConnect: true, // Attempts to auto-connect to the last used wallet.
+  autoConnect: true, // Propiedad correctamente ubicada para auto-conectar en Wagmi v2
   chains: [bscTestnet], // Defines the chains your DApp will interact with
   connectors: [
-    metaMask(), // MetaMask connector (as a function call)
+    metaMask(), // Llama a la función metaMask()
     walletConnect({
       // ¡¡CORRECCIÓN CRÍTICA!!: El projectId DEBE ser una cadena de texto (entre comillas).
       // Asegúrate de reemplazar 'YOUR_WALLETCONNECT_PROJECT_ID_HERE' con tu ID real de WalletConnect Cloud.
       projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'YOUR_WALLETCONNECT_PROJECT_ID_HERE',
       showQrModal: true,
     }),
-    injected(), // Injected connector (e.g., for other browser wallets)
+    injected(), // Llama a la función injected()
   ],
   transports: {
     [bscTestnet.id]: http(),
