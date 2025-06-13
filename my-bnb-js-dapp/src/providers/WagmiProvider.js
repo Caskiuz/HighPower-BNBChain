@@ -13,7 +13,9 @@ const config = createConfig({
   connectors: [
     metaMask(), // MetaMask connector (as a function call)
     walletConnect({
-      projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 56246e8df9c9151e77b7e93def28838e, // IMPORTANT! Replace with your WalletConnect Project ID
+      // ¡¡CORRECCIÓN CRÍTICA!!: El projectId DEBE ser una cadena de texto (entre comillas).
+      // Asegúrate de reemplazar 'YOUR_WALLETCONNECT_PROJECT_ID_HERE' con tu ID real de WalletConnect Cloud.
+      projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'YOUR_WALLETCONNECT_PROJECT_ID_HERE',
       showQrModal: true,
     }),
     injected(), // Injected connector (e.g., for other browser wallets)

@@ -1,4 +1,4 @@
-import '../globals.css';
+import './globals.css'; // <-- ¡¡CORRECCIÓN DE RUTA!!
 import { Inter } from 'next/font/google';
 import { WagmiProviderWrapper } from '@/providers/WagmiProvider'; // Import your Wagmi provider
 
@@ -20,4 +20,3 @@ export default function RootLayout({ children }) {
     </html>
   );
 }
-
